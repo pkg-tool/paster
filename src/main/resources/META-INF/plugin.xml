@@ -13,21 +13,25 @@
     <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
          Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
-    <description>A plugin to copy selected files or folders to clipboard in a structured format.</description>
+    <description><![CDATA[A plugin to copy selected files or folders to clipboard in a structured format.]]></description>
 
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
 
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
+        <notificationGroup id="Paster Notifications" displayType="BALLOON"/>
     </extensions>
 
     <actions>
-        <action id="pkg.tool.paster.PasterAction" class="pkg.tool.paster.PasterPlugin" text="Copy to Clipboard (Paster)"
-                description="Copy selected files or folders to clipboard in a structured format">
+        <action id="pkg.tool.paster.PasterAction" class="pkg.tool.paster.PasterPlugin" text="Copy (Paster)"
+                description="Copy selected files or folders to clipboard in a structured format using Paster">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="control shift C"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="control shift C"/>
         </action>
     </actions>
 </idea-plugin>
