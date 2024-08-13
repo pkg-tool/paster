@@ -4,41 +4,60 @@ import com.intellij.openapi.vfs.VirtualFile
 import java.io.IOException
 import java.time.Instant
 import java.time.ZoneOffset
+import java.util.*
 
 object FileProcessor {
     fun processFiles(files: List<VirtualFile>, projectName: String): String {
         val result = StringBuilder()
-        result.append("""<project name="$projectName" format-version="1.0">
+        result.append("""<project name="$projectName" format-version="1.2">
             |<generated_at>${Instant.now()}</generated_at>
             |""".trimMargin())
 
-        for (file in files) {
-            processFile(file, result, "")
+        val queue: Queue<Pair<VirtualFile, String>> = LinkedList()
+        files.forEach { queue.offer(it to it.path) }
+
+        while (queue.isNotEmpty()) {
+            val (file, path) = queue.poll()
+            processFile(file, result, path, queue)
         }
 
         result.append("</project>\n")
         return result.toString()
     }
 
-    private fun processFile(file: VirtualFile, result: StringBuilder, relativePath: String) {
+    private fun processFile(file: VirtualFile, result: StringBuilder, relativePath: String, queue: Queue<Pair<VirtualFile, String>>) {
         if (file.isDirectory) {
-            val newRelativePath = if (relativePath.isEmpty()) file.name else "$relativePath/${file.name}"
-            result.append("""<folder path="$newRelativePath">
+            result.append("""<folder path="$relativePath">
                 |
             """.trimMargin())
-            file.children.forEach { processFile(it, result, newRelativePath) }
+            
+            file.children.forEach { child -> 
+                queue.offer(child to "$relativePath/${child.name}")
+            }
+            
             result.append("</folder>")
         } else {
-            val filePath = if (relativePath.isEmpty()) file.name else "$relativePath/${file.name}"
             val modifiedTime = Instant.ofEpochMilli(file.timeStamp).atOffset(ZoneOffset.UTC)
-            result.append("""<file path="$filePath" size="${file.length}" modified="$modifiedTime">
-                |    <content><![CDATA[""".trimMargin())
+            result.append("""<file path="$relativePath" size="${file.length}" modified="$modifiedTime">
+                |    <content>
+                |""".trimMargin())
+            
             try {
-                result.append(String(file.contentsToByteArray()))
+                val lines = String(file.contentsToByteArray()).lines()
+                lines.forEachIndexed { index, line ->
+                    result.append("""      <line number="${index + 1}"><![CDATA[$line]]></line>
+                    |""".trimMargin())
+                }
+                // Add a newline after the last line if the file doesn't end with one
+                if (lines.isNotEmpty() && !lines.last().isBlank()) {
+                    result.append("""      <line number="${lines.size + 1}"><![CDATA[]]></line>
+                    |""".trimMargin())
+                }
             } catch (e: IOException) {
-                result.append("Error reading file content: ${e.message}")
+                result.append("""      <line number="1"><![CDATA[Error reading file content: ${e.message}]]></line>
+                |""".trimMargin())
             }
-            result.append("""    ]]></content>
+            result.append("""    </content>
                 |</file>""".trimMargin())
         }
     }

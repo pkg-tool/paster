@@ -5,8 +5,7 @@ plugins {
 }
 
 group = "pkg.tool"
-version = "1.0-SNAPSHOT"
-
+version = "2.de7e281"
 repositories {
     mavenCentral()
 }
