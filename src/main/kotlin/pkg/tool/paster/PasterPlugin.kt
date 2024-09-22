@@ -8,11 +8,13 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.notification.*
 import com.intellij.openapi.vfs.VirtualFile
 import java.awt.datatransfer.StringSelection
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 
 class PasterPlugin : AnAction() {
     companion object {
         private val NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Paster Notifications")
     }
+
     override fun actionPerformed(e: AnActionEvent) {
         val project: Project = e.project ?: return
         val selectedFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return
@@ -23,7 +25,7 @@ class PasterPlugin : AnAction() {
         // Copy the processed content to clipboard
         val selection = StringSelection(processedContent)
         CopyPasteManager.getInstance().setContents(selection)
-        
+
         // Show notification
         NOTIFICATION_GROUP
             .createNotification(
@@ -35,6 +37,10 @@ class PasterPlugin : AnAction() {
 
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = e.project != null
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
     }
 
     private fun countTotalFiles(files: List<VirtualFile>): Int {
